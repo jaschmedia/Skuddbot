@@ -31,6 +31,7 @@
   * This comes with increased clarity when a error occurs.
 * We now send `CAP REQ :twitch.tv/membership` upon connection to Twitch IRC.
 * We now keep track of which users are present in Twitch Chat.
+* Messages to Twitch chat are now sent with a delay of 750ms between messages.
 
 ## Fixed
 
