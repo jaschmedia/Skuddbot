@@ -27,7 +27,7 @@ import java.util.TreeMap;
  * This class holds settings and profiles for servers, and manages them too.
  *
  * @author Tim (Cooltimmetje)
- * @version v0.5-ALPHA-DEV
+ * @version v0.5-ALPHA
  * @since v0.2-ALPHA
  */
 
@@ -57,6 +57,8 @@ public class Server {
     private boolean streamLive;
     private boolean allowAnalytics;
     private boolean allowRewards;
+
+    public HashMap<String,String> commands = new HashMap<>();
 
     public HashMap<String,SkuddUser> discordProfiles = new HashMap<>();
     public HashMap<String,SkuddUser> twitchProfiles = new HashMap<>();

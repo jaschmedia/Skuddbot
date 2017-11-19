@@ -8,7 +8,7 @@
 
 ## Changed
 * Dashes (`-`) are now allowed to be used in `!usersettings` and `!serversettings`.
-* Discord4J updated: `2.8.3` -> `2.8.4`
+* Discord4J updated: `2.8.3` -> `2.9.2`
 * Welcome and goodbye messages are now embeds.
 * Restructured the `!xp` command in the backend.
   * This comes with increased clarity when a error occurs.
