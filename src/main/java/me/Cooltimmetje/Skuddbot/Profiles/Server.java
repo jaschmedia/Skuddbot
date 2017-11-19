@@ -60,6 +60,9 @@ public class Server {
 
     public HashMap<String,String> commands = new HashMap<>();
 
+    public ArrayList<String> twitchPresent = new ArrayList<>();
+    public HashMap<String,Long> twitchActive = new HashMap<>();
+
     public HashMap<String,SkuddUser> discordProfiles = new HashMap<>();
     public HashMap<String,SkuddUser> twitchProfiles = new HashMap<>();
 

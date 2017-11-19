@@ -30,6 +30,7 @@ public class SkuddbotTwitch extends PircBot{
     public SkuddbotTwitch() {
         this.setName(Constants.twitchBot);
         this.setLogin(Constants.twitchBot);
+        this.setMessageDelay(750);
     }
 
     @Override
@@ -37,6 +38,7 @@ public class SkuddbotTwitch extends PircBot{
         Logger.info("Connected to Twitch, Joining channels...");
 
         joinChannel("#" + Constants.twitchBot);
+        sendRawLine("CAP REQ :twitch.tv/membership");
     }
 
     @Override
@@ -52,13 +54,37 @@ public class SkuddbotTwitch extends PircBot{
 
     @Override
     protected void onJoin(String channel, String sender, String login, String hostname){
-        Logger.info("Joined channel: " + channel);
+        if(sender.equalsIgnoreCase(Constants.twitchBot)){
+            Logger.info("Joined channel: " + channel);
+            return;
+        }
+        if(Constants.bannedUsers.contains(sender)){
+            Logger.info(sender + " is on the bot list, ignoring...");
+            return;
+        }
+
+        Server server = ServerManager.getServerByTwitch(channel.replace("#"," ").trim());
+        server.getTwitchPresent().add(sender);
+
+        Logger.info(sender + " joined channel " + channel);
     }
 
 
     @Override
     protected void onPart(String channel, String sender, String login, String hostname){
-        Logger.info("Left channel: " + channel);
+        if(sender.equalsIgnoreCase(Constants.twitchBot)){
+            Logger.info("Left channel: " + channel);
+            return;
+        }
+        if(Constants.bannedUsers.contains(sender)){
+            Logger.info(sender + " is on the bot list, ignoring...");
+            return;
+        }
+
+        Server server = ServerManager.getServerByTwitch(channel.replace("#"," ").trim());
+        server.getTwitchPresent().remove(sender);
+
+        Logger.info(sender + " left channel " + channel);
     }
 
     @Override
@@ -117,7 +143,7 @@ public class SkuddbotTwitch extends PircBot{
             } else {
                 Server server = ServerManager.getServerByTwitch(channel.replace("#", " ").trim());
                 if(server.getCommands().containsKey(message.split(" ")[0].toLowerCase())){
-                    CommandManager.respondTwitch(message, channel.replace("#", " ").trim());
+                    CommandManager.respondTwitch(sender, message, channel.replace("#", " ").trim());
                 } else {
                     if (!Constants.bannedUsers.contains(sender)) {
                         SkuddUser user = ProfileManager.getTwitch(sender, channel, true);

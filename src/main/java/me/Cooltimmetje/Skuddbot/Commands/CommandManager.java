@@ -11,6 +11,7 @@ import me.Cooltimmetje.Skuddbot.Profiles.MySqlManager;
 import me.Cooltimmetje.Skuddbot.Profiles.Server;
 import me.Cooltimmetje.Skuddbot.Profiles.ServerManager;
 import me.Cooltimmetje.Skuddbot.Utilities.MessagesUtils;
+import me.Cooltimmetje.Skuddbot.Utilities.MiscUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -172,7 +173,7 @@ public class CommandManager {
             try {
                 JSONObject obj = (JSONObject) parser.parse(server.getCommands().get(command));
 
-                MessagesUtils.sendPlain(obj.get("response").toString(), message.getChannel(), false);
+                MessagesUtils.sendPlain(variables(message, null, null, obj.get("response").toString(), server), message.getChannel(), false);
             } catch (ParseException e) {
                 e.printStackTrace();
             }
@@ -184,18 +185,31 @@ public class CommandManager {
         Main.getSkuddbotTwitch().send(result.substring(4).replace("$name", sender), channel);
     }
 
-    public static void respondTwitch(String message, String channel){
+    public static void respondTwitch(String sender, String message, String channel){
         Server server = ServerManager.getServerByTwitch(channel);
         String command = message.split(" ")[0].toLowerCase();
         if(server.getCommands().containsKey(command)){
             try {
                 JSONObject obj = (JSONObject) parser.parse(server.getCommands().get(command));
 
-                Main.getSkuddbotTwitch().send(obj.get("response").toString(), channel);
+                Main.getSkuddbotTwitch().send(variables(null, sender, message, obj.get("response").toString(), server), channel);
             } catch (ParseException e) {
                 e.printStackTrace();
             }
         }
+    }
+
+    public static String variables(IMessage messageDis, String sender, String messageTwi, String input, Server server){
+        boolean twitch = messageDis == null;
+        String message = twitch ? messageTwi : messageDis.getContent();
+
+        input = input.replace("$user", twitch ? sender : messageDis.getAuthor().mention());
+        if(message.split(" ").length > 1) {
+            input = input.replace("$arguments", message.substring(message.split(" ")[0].length() + 1));
+        }
+        input = input.replace("$randomuser", twitch ? (server.getTwitchPresent().size() == 0 ? "$randomuser " : server.getTwitchPresent().get(MiscUtils.randomInt(0, server.getTwitchPresent().size() - 1))) : "$randomuser");
+
+        return input;
     }
 
     /**
