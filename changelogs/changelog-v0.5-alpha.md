@@ -1,6 +1,10 @@
 # The CMDR Update (v0.5-ALPHA)
 
 ## Added
+* **CUSTOMIZABLE COMMANDS** - yes, it's real
+  * You can now add your own commands using `!command` on Discord or `s!command` on Twitch.
+    * You use it like this: `(s)!command <add/remove/edit> <command> <response/settings>`
+  * Added commands work on both platforms, regardless of where you added them.
 * You can now attach images to welcome and goodbye messages!
   * You can do this using the `WELCOME_MSG_ATTACH` and `GOODBYE_MSG_ATTACH` settings under `!serversettings`.
 * You can now make your XP private.
