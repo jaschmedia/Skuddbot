@@ -5,6 +5,7 @@ import me.Cooltimmetje.Skuddbot.Enums.DataTypes;
 import me.Cooltimmetje.Skuddbot.Listeners.CreateServerListener;
 import me.Cooltimmetje.Skuddbot.Main;
 import me.Cooltimmetje.Skuddbot.Utilities.Constants;
+import me.Cooltimmetje.Skuddbot.Utilities.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -486,9 +487,7 @@ public class MySqlManager {
                     e.printStackTrace();
                 }
             }
-
         }
-
     }
 
     public static void createServerTables(String serverID){
@@ -1369,6 +1368,129 @@ public class MySqlManager {
             if(rs != null){
                 try {
                     rs.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    /**
+     * This loads all custom commands for the given server from the database and adds them to the HashMap.
+     *
+     * @param server The serverID from which we want the commands.
+     */
+    public static void loadCommands(Server server){
+        Connection c = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        String query = "SELECT * FROM " + server.getServerID() + "_commands;";
+
+        try {
+            c = hikari.getConnection();
+            ps = c.prepareStatement(query);
+            rs = ps.executeQuery();
+
+            while(rs.next()){
+                server.getCommands().put(rs.getString(1), rs.getString(2));
+                Logger.info("Loaded command: " + rs.getString(1) + " | Value: " + rs.getString(2));
+            }
+        } catch (SQLException e){
+            e.printStackTrace();
+        } finally {
+            if(c != null){
+                try {
+                    c.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if(ps != null){
+                try {
+                    ps.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if(rs != null){
+                try {
+                    rs.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    /**
+     * This saves the given command in the database for the given server with the given value.
+     *
+     * @param serverID The ServerID where we want to save the command.
+     * @param command The command that we want to save.
+     * @param value The value that we want to save with the command.
+     */
+    public static void saveCommand(String serverID, String command, String value){
+        Connection c = null;
+        PreparedStatement ps = null;
+
+        String query = "INSERT INTO " + serverID + "_commands VALUES(?,?) ON DUPLICATE KEY UPDATE value=?";
+
+        try {
+            c = hikari.getConnection();
+            ps = c.prepareStatement(query);
+
+            ps.setString(1, command);
+            ps.setString(2, value);
+            ps.setString(3, value);
+
+            ps.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            if(c != null){
+                try {
+                    c.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if(ps != null){
+                try {
+                    ps.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    public static void deleteCommand(String serverID, String command){
+        Connection c = null;
+        PreparedStatement ps = null;
+
+        String query = "DELETE FROM " + serverID + "_commands WHERE command=?;";
+
+        try {
+            c = hikari.getConnection();
+            ps = c.prepareStatement(query);
+
+            ps.setString(1, command);
+
+            ps.execute();
+        } catch (SQLException e){
+            e.printStackTrace();
+        } finally {
+            if(c != null){
+                try {
+                    c.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if(ps != null){
+                try {
+                    ps.close();
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }

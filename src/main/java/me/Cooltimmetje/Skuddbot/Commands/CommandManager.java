@@ -6,10 +6,14 @@ import me.Cooltimmetje.Skuddbot.Commands.Admin.SuperAdmin.AwesomeManager;
 import me.Cooltimmetje.Skuddbot.Commands.Admin.SuperAdmin.LoadAuth;
 import me.Cooltimmetje.Skuddbot.Commands.Admin.SuperAdmin.SayCommand;
 import me.Cooltimmetje.Skuddbot.Enums.EmojiEnum;
+import me.Cooltimmetje.Skuddbot.Main;
+import me.Cooltimmetje.Skuddbot.Profiles.MySqlManager;
 import me.Cooltimmetje.Skuddbot.Profiles.Server;
 import me.Cooltimmetje.Skuddbot.Profiles.ServerManager;
 import me.Cooltimmetje.Skuddbot.Utilities.MessagesUtils;
-import org.json.JSONObject;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import sx.blah.discord.api.events.EventSubscriber;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 import sx.blah.discord.handle.obj.IMessage;
@@ -24,6 +28,8 @@ import java.io.IOException;
  * @since v0.1-ALPHA
  */
 public class CommandManager {
+
+    public static JSONParser parser = new JSONParser();
 
     /**
      * EVENT: This event gets triggered when a message gets posted, it will check for a command and then run the code to process that command.
@@ -108,8 +114,11 @@ public class CommandManager {
                     SaluteCommand.run(event.getMessage());
                     break;
                 case "!command":
-                    discordEdit(event.getMessage());
-                break;
+                    editDiscord(event.getMessage());
+                    break;
+                default:
+                    respondDiscord(event.getMessage());
+                    break;
             }
         } else {
             switch (event.getMessage().getContent().split(" ")[0].toLowerCase()) {
@@ -147,12 +156,45 @@ public class CommandManager {
         }
     }
 
-    public static void discordEdit(IMessage message){
-        String result = commandEditor(message.getContent(), ServerManager.getServer(message.getStringID()));
+    public static void editDiscord(IMessage message){
+        String result = commandEditor(message.getContent(), ServerManager.getServer(message.getGuild().getStringID()));
         if(result.startsWith("ERR ")){
             MessagesUtils.addReaction(message, result.substring(4).replace("$name", message.getAuthor().mention()), EmojiEnum.X);
         } else if(result.startsWith("SUC ")) {
             MessagesUtils.addReaction(message, result.substring(4).replace("$name", message.getAuthor().mention()), EmojiEnum.WHITE_CHECK_MARK);
+        }
+    }
+
+    public static void respondDiscord(IMessage message){
+        Server server = ServerManager.getServer(message.getGuild().getStringID());
+        String command = message.getContent().split(" ")[0].toLowerCase();
+        if(server.getCommands().containsKey(command)){
+            try {
+                JSONObject obj = (JSONObject) parser.parse(server.getCommands().get(command));
+
+                MessagesUtils.sendPlain(obj.get("response").toString(), message.getChannel(), false);
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static void editTwitch(String sender, String message, String channel){
+        String result = commandEditor(message, ServerManager.getServerByTwitch(channel));
+        Main.getSkuddbotTwitch().send(result.substring(4).replace("$name", sender), channel);
+    }
+
+    public static void respondTwitch(String message, String channel){
+        Server server = ServerManager.getServerByTwitch(channel);
+        String command = message.split(" ")[0].toLowerCase();
+        if(server.getCommands().containsKey(command)){
+            try {
+                JSONObject obj = (JSONObject) parser.parse(server.getCommands().get(command));
+
+                Main.getSkuddbotTwitch().send(obj.get("response").toString(), channel);
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -164,11 +206,11 @@ public class CommandManager {
      */
     public static String commandEditor(String input, Server server){ //!command add !memes Memes are dank.
         String[] args = input.split(" ");
-        if(args.length > 3){
+        if(args.length > 3 || (args[1].equalsIgnoreCase("remove") && args.length > 2)){
             switch (args[1].toLowerCase()){
                 case "add":
                     if(server.getCommands().containsKey(args[2].toLowerCase())){
-                        return "ERR This command already exists.";
+                        return "ERR $name, This command already exists.";
                     }
 
                     StringBuilder sbResponse = new StringBuilder();
@@ -184,11 +226,36 @@ public class CommandManager {
 
                     return "SUC $name, the command " + args[2].toLowerCase() + " has been added. Response: " + response;
                 case "remove":
+                    if(!server.getCommands().containsKey(args[2].toLowerCase())){
+                        return "ERR $name, This command doesn't exist.";
+                    }
 
-                    break;
+                    server.getCommands().remove(args[2].toLowerCase());
+
+                    MySqlManager.deleteCommand(server.getServerID(), args[2].toLowerCase());
+                    return "SUC $name, the command " + args[2].toLowerCase() + " has been removed.";
                 case "edit":
+                    if(!server.getCommands().containsKey(args[2].toLowerCase())){
+                        return "ERR $name, This command doesn't exist.";
+                    }
 
-                    break;
+                    StringBuilder sbResponseEdit = new StringBuilder();
+                    for(int i = 3; i < args.length; i++){
+                        sbResponseEdit.append(args[i]).append(" ");
+                    }
+                    String responseEdit = sbResponseEdit.toString().trim();
+
+                    JSONObject obj = null;
+                    try {
+                        obj = (JSONObject) parser.parse(server.getCommands().get(args[2].toLowerCase()));
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                    }
+                    obj.put("response", responseEdit);
+
+                    server.getCommands().put(args[2].toLowerCase(), obj.toString());
+
+                    return "SUC $name, the command " + args[2].toLowerCase() + " has been edited. Response: " + responseEdit;
                 default:
                     return "ERR Invalid operation: Use add, remove or edit.";
             }

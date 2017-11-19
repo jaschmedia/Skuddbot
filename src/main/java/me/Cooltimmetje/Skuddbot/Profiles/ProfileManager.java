@@ -4,7 +4,7 @@ package me.Cooltimmetje.Skuddbot.Profiles;
  * This class handles all profiles, getting them from either memory or the database, or creating new ones.
  *
  * @author Tim (Cooltimmetje)
- * @version v0.2-ALPHA
+ * @version v0.5-ALPHA
  * @since v0.1-ALPHA
  */
 
@@ -50,7 +50,7 @@ public class ProfileManager {
 
     public static SkuddUser getTwitch(String twitchUsername, String twitchChannel, boolean createNew){
         twitchChannel = twitchChannel.replace("#", " ").trim();
-        Server server = ServerManager.getTwitch(twitchChannel);
+        Server server = ServerManager.getServerByTwitch(twitchChannel);
         String serverID = server.getServerID();
         SkuddUser user = server.getTwitch(twitchUsername);
 

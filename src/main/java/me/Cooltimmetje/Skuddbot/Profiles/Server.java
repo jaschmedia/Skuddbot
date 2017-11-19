@@ -107,6 +107,7 @@ public class Server {
             ServerManager.twitchServers.put(twitchChannel, this);
         }
 
+        MySqlManager.loadCommands(this);
         Logger.info("[LoadServer] " + Main.getInstance().getSkuddbot().getGuildByID(Long.parseLong(serverID)).getName() + " (ID: " + serverID + ")");
     }
 
@@ -118,6 +119,9 @@ public class Server {
     public void save(boolean onlySettings){
         if(serverInitialized) {
             MySqlManager.saveServer(this);
+            for(String s : commands.keySet()){
+                MySqlManager.saveCommand(serverID, s, commands.get(s));
+            }
 
             if (!onlySettings) {
                 ArrayList<SkuddUser> saved = new ArrayList<>();

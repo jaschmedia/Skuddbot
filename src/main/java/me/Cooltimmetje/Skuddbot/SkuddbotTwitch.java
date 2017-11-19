@@ -1,5 +1,6 @@
 package me.Cooltimmetje.Skuddbot;
 
+import me.Cooltimmetje.Skuddbot.Commands.CommandManager;
 import me.Cooltimmetje.Skuddbot.Commands.TwitchLinkCommand;
 import me.Cooltimmetje.Skuddbot.Profiles.*;
 import me.Cooltimmetje.Skuddbot.Utilities.Constants;
@@ -18,7 +19,7 @@ import static me.Cooltimmetje.Skuddbot.Profiles.ServerManager.twitchServers;
  * Everything Twitch happens here!
  *
  * @author Tim (Cooltimmetje)
- * @version v0.5-ALPHA-DEV
+ * @version v0.5-ALPHA
  * @since v0.1-ALPHA
  */
 public class SkuddbotTwitch extends PircBot{
@@ -67,33 +68,33 @@ public class SkuddbotTwitch extends PircBot{
         if (twitchServers.containsKey(channel.replace("#", " ").trim())) {
 
             if (message.toLowerCase().startsWith("!riot") || message.startsWith("(╯°□°）╯︵ ┻━┻")) {
-                sendMessage(channel, ((ServerManager.getTwitch(channel.replace("#", " ").trim()).isVrMode() ? "! " : " ") + "(╯°□°）╯︵ ┻━┻").trim());
+                sendMessage(channel, ((ServerManager.getServerByTwitch(channel.replace("#", " ").trim()).isVrMode() ? "! " : " ") + "(╯°□°）╯︵ ┻━┻").trim());
             } else if (message.startsWith("!xpban") && (sender.equalsIgnoreCase("cooltimmetje") || sender.equalsIgnoreCase("jaschmedia"))) {
                 String[] args = message.split(" ");
                 if (args.length > 1) {
                     if (!Constants.bannedUsers.contains(args[1].toLowerCase())) {
-                        sendMessage(channel, ((ServerManager.getTwitch(channel.replace("#", " ").trim()).isVrMode() ? "! " : " ") + args[1] + " is now globally banned from gaining XP. #rekt").trim());
+                        sendMessage(channel, ((ServerManager.getServerByTwitch(channel.replace("#", " ").trim()).isVrMode() ? "! " : " ") + args[1] + " is now globally banned from gaining XP. #rekt").trim());
                         Constants.bannedUsers.add(args[1].toLowerCase());
                         MySqlManager.banUser(args[1].toLowerCase());
                     } else {
-                        sendMessage(channel, ((ServerManager.getTwitch(channel.replace("#", " ").trim()).isVrMode() ? "! " : " ") + args[1] + " is already globally banned from gaining XP.").trim());
+                        sendMessage(channel, ((ServerManager.getServerByTwitch(channel.replace("#", " ").trim()).isVrMode() ? "! " : " ") + args[1] + " is already globally banned from gaining XP.").trim());
                     }
                 }
             } else if (message.startsWith("!flip ")) {
                 if (cooldown.containsKey(channel)) {
                     if ((System.currentTimeMillis() - cooldown.get(channel)) > 30000) {
-                        sendMessage(channel, ((ServerManager.getTwitch(channel.replace("#", " ").trim()).isVrMode() ? "! " : " ") + "(╯°□°）╯︵ " + MiscUtils.flipText(message.trim().substring(6, message.length()).trim())).trim());
+                        sendMessage(channel, ((ServerManager.getServerByTwitch(channel.replace("#", " ").trim()).isVrMode() ? "! " : " ") + "(╯°□°）╯︵ " + MiscUtils.flipText(message.trim().substring(6, message.length()).trim())).trim());
                         cooldown.put(channel, System.currentTimeMillis());
                     }
                 } else {
-                    sendMessage(channel, ((ServerManager.getTwitch(channel.replace("#", " ").trim()).isVrMode() ? "! " : " ") + "(╯°□°）╯︵ " + MiscUtils.flipText(message.trim().substring(6, message.length()).trim())).trim());
+                    sendMessage(channel, ((ServerManager.getServerByTwitch(channel.replace("#", " ").trim()).isVrMode() ? "! " : " ") + "(╯°□°）╯︵ " + MiscUtils.flipText(message.trim().substring(6, message.length()).trim())).trim());
                     cooldown.put(channel, System.currentTimeMillis());
                 }
             } else if (message.startsWith("!reverse ")) {
                 reverseCommand(message, channel, sender);
-            } else if (message.startsWith("!toggletracking")){
-                if(cooldown.containsKey(sender)){
-                    if((System.currentTimeMillis() - cooldown.get(sender)) > 30000) {
+            } else if (message.startsWith("!toggletracking")) {
+                if (cooldown.containsKey(sender)) {
+                    if ((System.currentTimeMillis() - cooldown.get(sender)) > 30000) {
                         SkuddUser user = ProfileManager.getTwitch(sender, channel, true);
                         boolean currentlyEnabled = user.isTrackMe();
                         user.setTrackMe(!user.isTrackMe());
@@ -111,18 +112,24 @@ public class SkuddbotTwitch extends PircBot{
                             (user.isLinked() ? " | NOTE: Because your account is linked to Discord, tracking has also been " + (currentlyEnabled ? "disabled" : "enabled") + " on Discord." : ""));
                     cooldown.put(sender, System.currentTimeMillis());
                 }
+            } else if (message.startsWith("s!command ")) {
+                CommandManager.editTwitch(sender, message, channel.replace("#", " ").trim());
             } else {
-                if (!Constants.bannedUsers.contains(sender)) {
-                    SkuddUser user = ProfileManager.getTwitch(sender, channel, true);
-                    if(user.isTrackMe()) {
-                        Server server = ServerManager.getTwitch(channel.replace("#", " ").trim());
-                        gain = MiscUtils.randomInt(server.getMinXpTwitch(), server.getMaxXpTwitch());
-                        user.setXp(user.getXp() + gain);
+                Server server = ServerManager.getServerByTwitch(channel.replace("#", " ").trim());
+                if(server.getCommands().containsKey(message.split(" ")[0].toLowerCase())){
+                    CommandManager.respondTwitch(message, channel.replace("#", " ").trim());
+                } else {
+                    if (!Constants.bannedUsers.contains(sender)) {
+                        SkuddUser user = ProfileManager.getTwitch(sender, channel, true);
+                        if(user.isTrackMe()) {
+                            gain = MiscUtils.randomInt(server.getMinXpTwitch(), server.getMaxXpTwitch());
+                            user.setXp(user.getXp() + gain);
+                        }
                     }
                 }
             }
 
-            Server server = ServerManager.getTwitch(channel.replace("#", " ").trim());
+            Server server = ServerManager.getServerByTwitch(channel.replace("#", " ").trim());
             server.logMessage(sender, message, gain);
 
         } else if (channel.equals("#" + Constants.twitchBot)) {
@@ -176,11 +183,11 @@ public class SkuddbotTwitch extends PircBot{
         }
         if (cooldown.containsKey(channel)) {
             if ((System.currentTimeMillis() - cooldown.get(channel)) > 30000) {
-                sendMessage(channel, ((ServerManager.getTwitch(channel.replace("#", " ").trim()).isVrMode() ? "! " : " ") + MiscUtils.reverse(message.trim().substring(9, message.length()).trim(), true)).trim());
+                sendMessage(channel, ((ServerManager.getServerByTwitch(channel.replace("#", " ").trim()).isVrMode() ? "! " : " ") + MiscUtils.reverse(message.trim().substring(9, message.length()).trim(), true)).trim());
                 cooldown.put(channel, System.currentTimeMillis());
             }
         } else {
-            sendMessage(channel, ((ServerManager.getTwitch(channel.replace("#", " ").trim()).isVrMode() ? "! " : " ") + MiscUtils.reverse(message.trim().substring(9, message.length()).trim(), true)).trim());
+            sendMessage(channel, ((ServerManager.getServerByTwitch(channel.replace("#", " ").trim()).isVrMode() ? "! " : " ") + MiscUtils.reverse(message.trim().substring(9, message.length()).trim(), true)).trim());
             cooldown.put(channel, System.currentTimeMillis());
         }
     }
