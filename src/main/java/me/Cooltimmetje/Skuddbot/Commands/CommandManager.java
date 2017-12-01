@@ -207,7 +207,9 @@ public class CommandManager {
         if(message.split(" ").length > 1) {
             input = input.replace("$arguments", message.substring(message.split(" ")[0].length() + 1));
         }
-        input = input.replace("$randomuser", twitch ? (server.getTwitchPresent().size() == 0 ? "$randomuser " : server.getTwitchPresent().get(MiscUtils.randomInt(0, server.getTwitchPresent().size() - 1))) : "$randomuser");
+        input = input.replace("$randomuser", twitch ? (server.getTwitchPresent().size() == 0 ? "$randomuser" : server.getTwitchPresent().get(MiscUtils.randomInt(0, server.getTwitchPresent().size() - 1))) : Main.getInstance().getSkuddbot().getUserByID(Long.parseLong(server.getDiscordProfiles().keySet().toArray()[MiscUtils.randomInt(0, server.getDiscordProfiles().size() -1 )].toString())).mention());
+
+        ;
 
         return input;
     }
@@ -235,6 +237,8 @@ public class CommandManager {
 
                     JSONObject object = new JSONObject();
                     object.put("response", response);
+                    object.put("count", 0);
+                    object.put("sessioncount", 0);
 
                     server.getCommands().put(args[2].toLowerCase(), object.toString());
 

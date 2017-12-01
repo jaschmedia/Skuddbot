@@ -15,7 +15,7 @@
       * Get's replaced with everything that is after the command itself.
     * `$randomuser`
       * Twitch: Get's replaced with a random user that is present in chat.
-      * Discord: *WIP*
+      * Discord: Get's replaced with a active random user.
 
 ### The other things
 * You can now attach images to welcome and goodbye messages!
